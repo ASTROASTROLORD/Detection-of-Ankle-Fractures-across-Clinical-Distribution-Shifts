@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Patient diagnostic output",
+  "type": "object",
+  "required": ["patient_id", "class_scores", "class_predictions", "layers"],
+  "properties": {
+    "patient_id": {"type": "string"},
+    "class_scores": {"type": "object"},
+    "class_predictions": {"type": "object"},
+    "layers": {"type": "object"},
+    "lesion_state": {"type": "string"}
+  }
+}
