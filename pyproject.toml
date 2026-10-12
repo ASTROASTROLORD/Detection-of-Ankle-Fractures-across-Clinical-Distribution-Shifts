@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ankle-fracture-algorithm"
-version = "0.1.0"
+version = "0.2.0"
 description = "Faster R-CNN ankle-fracture detection with patient-level diagnostic analysis"
 requires-python = ">=3.10"
 dependencies = ["numpy>=1.24"]
@@ -13,4 +13,7 @@ dependencies = ["numpy>=1.24"]
 package-dir = {"" = "."}
 
 [tool.setuptools.packages.find]
-include = ["algorithm*"]
+include = ["algorithm*", "interface*"]
+
+[tool.setuptools.package-data]
+algorithm = ["schemas/*.json", "schemas/*.yaml"]

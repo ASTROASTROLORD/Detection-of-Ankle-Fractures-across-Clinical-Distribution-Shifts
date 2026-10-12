@@ -1,17 +1,43 @@
-states:
-  - id: no_core_fracture
-    description: No core fracture target is present.
-  - id: lateral_malleolus_fracture
-    description: Lateral malleolus is the assigned diagnostic state.
-  - id: medial_malleolus_fracture
-    description: Medial malleolus is the assigned diagnostic state.
-  - id: posterior_malleolus_fracture
-    description: Posterior malleolus is the assigned diagnostic state.
-  - id: distal_tibial_fracture
-    description: Distal tibia is the assigned diagnostic state.
-priority_order:
-  - distal_tibial_fracture
-  - posterior_malleolus_fracture
-  - medial_malleolus_fracture
-  - lateral_malleolus_fracture
-  - no_core_fracture
+lesion_analysis:
+  unit: reference_lesion
+  denominator: all_reference_lesions
+  score_floor: 0.05
+  candidate_iou: 0.25
+  localization_iou: 0.50
+  max_predictions_per_image: 100
+  matching: per_image_class_agnostic_descending_score_stable_one_to_one
+  states:
+    - id: no_effective_candidate
+      description: No match and best retained-candidate IoU below 0.25.
+    - id: localization_insufficient
+      description: No match despite a retained candidate with IoU at least 0.25.
+    - id: wrong_class
+      description: Matched prediction has an incorrect fracture site.
+    - id: correct_below_frozen_threshold
+      description: Matched site is correct but score is below its frozen threshold.
+    - id: correct_frozen_threshold_met
+      description: Matched site is correct and score reaches its frozen threshold.
+  class_thresholds:
+    lateral_malleolus_fracture: 0.63
+    medial_malleolus_fracture: 0.76
+    posterior_malleolus_fracture: 0.79
+    distal_tibial_fracture: 0.68
+patient_site_summary:
+  unit: patient
+  states:
+    - id: no_core_fracture
+      description: No core fracture site reaches its declared threshold.
+    - id: lateral_malleolus_fracture
+      description: Lateral malleolus is the assigned diagnostic state.
+    - id: medial_malleolus_fracture
+      description: Medial malleolus is the assigned diagnostic state.
+    - id: posterior_malleolus_fracture
+      description: Posterior malleolus is the assigned diagnostic state.
+    - id: distal_tibial_fracture
+      description: Distal tibia is the assigned diagnostic state.
+  priority_order:
+    - distal_tibial_fracture
+    - posterior_malleolus_fracture
+    - medial_malleolus_fracture
+    - lateral_malleolus_fracture
+    - no_core_fracture

@@ -1,0 +1,34 @@
+{
+  "images": [
+    {
+      "image_id": "synthetic-no-candidate",
+      "scene": "synthetic",
+      "ground_truth": [{"gt_id": 1, "label": 0, "box": [0, 0, 10, 10]}],
+      "detections": []
+    },
+    {
+      "image_id": "synthetic-localization-insufficient",
+      "scene": "synthetic",
+      "ground_truth": [{"gt_id": 1, "label": 0, "box": [0, 0, 10, 10]}],
+      "detections": [{"label": 0, "score": 0.9, "box": [0, 0, 4, 10]}]
+    },
+    {
+      "image_id": "synthetic-wrong-class",
+      "scene": "synthetic",
+      "ground_truth": [{"gt_id": 1, "label": 0, "box": [0, 0, 10, 10]}],
+      "detections": [{"label": 1, "score": 0.9, "box": [0, 0, 10, 10]}]
+    },
+    {
+      "image_id": "synthetic-below-threshold",
+      "scene": "synthetic",
+      "ground_truth": [{"gt_id": 1, "label": 0, "box": [0, 0, 10, 10]}],
+      "detections": [{"label": 0, "score": 0.62, "box": [0, 0, 10, 10]}]
+    },
+    {
+      "image_id": "synthetic-threshold-met",
+      "scene": "synthetic",
+      "ground_truth": [{"gt_id": 1, "label": 0, "box": [0, 0, 10, 10]}],
+      "detections": [{"label": 0, "score": 0.63, "box": [0, 0, 10, 10]}]
+    }
+  ]
+}

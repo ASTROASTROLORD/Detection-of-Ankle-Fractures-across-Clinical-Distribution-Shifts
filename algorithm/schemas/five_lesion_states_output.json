@@ -1,0 +1,385 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Unified five-state diagnosis output",
+  "type": "object",
+  "properties": {
+    "method": {
+      "type": "object",
+      "required": [
+        "unit",
+        "denominator",
+        "matching",
+        "score_floor",
+        "candidate_iou",
+        "localization_iou",
+        "max_predictions_per_image",
+        "class_thresholds",
+        "images"
+      ],
+      "properties": {
+        "unit": {
+          "const": "reference lesion"
+        },
+        "denominator": {
+          "type": "string"
+        },
+        "matching": {
+          "type": "string"
+        },
+        "score_floor": {
+          "const": 0.05
+        },
+        "candidate_iou": {
+          "const": 0.25
+        },
+        "localization_iou": {
+          "const": 0.5
+        },
+        "max_predictions_per_image": {
+          "const": 100
+        },
+        "images": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "class_thresholds": {
+          "type": "object",
+          "required": [
+            "lateral_malleolus_fracture",
+            "medial_malleolus_fracture",
+            "posterior_malleolus_fracture",
+            "distal_tibial_fracture"
+          ],
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "all",
+        "by_scene"
+      ],
+      "properties": {
+        "all": {
+          "$ref": "#/$defs/summary"
+        },
+        "by_scene": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/summary"
+          }
+        }
+      }
+    },
+    "lesions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "scene",
+          "image_id",
+          "gt_id",
+          "gt_class",
+          "gt_box",
+          "matched",
+          "prediction_index",
+          "prediction_class",
+          "prediction_score",
+          "prediction_rank",
+          "prediction_box",
+          "matched_iou",
+          "best_any_iou",
+          "outcome"
+        ],
+        "properties": {
+          "scene": {
+            "type": "string"
+          },
+          "image_id": {
+            "type": "string"
+          },
+          "gt_id": {
+            "type": [
+              "string",
+              "integer"
+            ]
+          },
+          "gt_class": {
+            "$ref": "#/$defs/class"
+          },
+          "gt_box": {
+            "$ref": "#/$defs/box"
+          },
+          "matched": {
+            "type": "boolean"
+          },
+          "prediction_index": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "prediction_class": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/class"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prediction_score": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "prediction_rank": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "prediction_box": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/box"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "matched_iou": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0.5,
+            "maximum": 1
+          },
+          "best_any_iou": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "outcome": {
+            "enum": [
+              "no_effective_candidate",
+              "localization_insufficient",
+              "wrong_class",
+              "correct_below_frozen_threshold",
+              "correct_frozen_threshold_met"
+            ]
+          }
+        }
+      }
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "class_scores": {
+      "$ref": "#/$defs/site_scores"
+    },
+    "layers": {
+      "type": "object",
+      "required": [
+        "layer_1_patient_fracture_recognition"
+      ],
+      "properties": {
+        "layer_1_patient_fracture_recognition": {
+          "type": "object",
+          "required": [
+            "scores"
+          ],
+          "properties": {
+            "scores": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          }
+        }
+      }
+    },
+    "lesion_state": {
+      "enum": [
+        "no_core_fracture",
+        "lateral_malleolus_fracture",
+        "medial_malleolus_fracture",
+        "posterior_malleolus_fracture",
+        "distal_tibial_fracture"
+      ]
+    },
+    "patient_site_summary": {
+      "type": "object",
+      "required": [
+        "unit",
+        "state",
+        "class_scores",
+        "class_thresholds",
+        "priority_order"
+      ],
+      "properties": {
+        "unit": {
+          "const": "patient"
+        },
+        "state": {
+          "enum": [
+            "no_core_fracture",
+            "lateral_malleolus_fracture",
+            "medial_malleolus_fracture",
+            "posterior_malleolus_fracture",
+            "distal_tibial_fracture"
+          ]
+        },
+        "class_scores": {
+          "$ref": "#/$defs/site_scores"
+        },
+        "class_thresholds": {
+          "$ref": "#/$defs/site_scores"
+        },
+        "priority_order": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "lateral_malleolus_fracture",
+              "medial_malleolus_fracture",
+              "posterior_malleolus_fracture",
+              "distal_tibial_fracture"
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 4
+        }
+      }
+    }
+  },
+  "$defs": {
+    "class": {
+      "enum": [
+        "lateral_malleolus_fracture",
+        "medial_malleolus_fracture",
+        "posterior_malleolus_fracture",
+        "distal_tibial_fracture"
+      ]
+    },
+    "box": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "reference_lesions",
+        "counts",
+        "proportions"
+      ],
+      "properties": {
+        "reference_lesions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "no_effective_candidate",
+            "localization_insufficient",
+            "wrong_class",
+            "correct_below_frozen_threshold",
+            "correct_frozen_threshold_met"
+          ],
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "proportions": {
+          "type": "object",
+          "required": [
+            "no_effective_candidate",
+            "localization_insufficient",
+            "wrong_class",
+            "correct_below_frozen_threshold",
+            "correct_frozen_threshold_met"
+          ],
+          "additionalProperties": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "site_scores": {
+      "type": "object",
+      "required": [
+        "lateral_malleolus_fracture",
+        "medial_malleolus_fracture",
+        "posterior_malleolus_fracture",
+        "distal_tibial_fracture"
+      ],
+      "properties": {
+        "lateral_malleolus_fracture": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "medial_malleolus_fracture": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "posterior_malleolus_fracture": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "distal_tibial_fracture": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "method",
+        "summary",
+        "lesions"
+      ]
+    },
+    {
+      "required": [
+        "patient_site_summary",
+        "lesion_state"
+      ]
+    }
+  ]
+}

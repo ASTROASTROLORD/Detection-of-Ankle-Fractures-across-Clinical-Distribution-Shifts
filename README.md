@@ -43,9 +43,10 @@ The detector output is interpreted through a four-layer diagnostic framework:
    using fixed class-specific thresholds.
 
 The diagnostic analysis modules provide category-specific FROC, class-agnostic
-FROC, IoU sensitivity analysis, localization confusion matrices, and a five-
-state mutually exclusive lesion summary. The five-state summary is a reporting
-taxonomy; it is not an additional detector output class.
+FROC, IoU sensitivity analysis, localization confusion matrices, and one unified
+five-state analysis module. It provides the original patient-level fracture-site
+summary and the five mutually exclusive reference-lesion detection outcomes.
+Both are derived analyses; the detector retains its four fracture-site outputs.
 
 ## Repository layout
 
@@ -66,7 +67,8 @@ ankle-fracture-algorithm/
 ├── interface/
 │   ├── infer_image.py                    # normalize image-level output
 │   ├── infer_patient.py                  # run four-layer patient analysis
-│   └── summarize_patient_diagnosis.py     # assign five-state summary
+│   └── summarize_patient_diagnosis.py     # unified site and lesion-state summary
+├── examples/                             # synthetic lesion and patient inputs
 ├── docs/                                 # algorithm and limitation notes
 ├── tests/                                # synthetic, data-free tests
 └── third_party/                          # dependency and license notes
@@ -187,7 +189,47 @@ The output includes patient-level class scores, fixed-threshold decisions, and
 the four-layer result structure. Thresholds are part of the declared operating
 point and should not be changed silently when comparing outputs.
 
-### Five-state diagnostic summary
+### Unified five-state analysis
+
+The existing `five_lesion_states.py` module and `summarize_patient_diagnosis`
+interface handle both patient site summaries and reference-lesion outcomes.
+For annotated images, run:
+
+```bash
+python -m interface.summarize_patient_diagnosis \
+  examples/five_lesion_states_input.json lesion_analysis.json \
+  --threshold 0.63 0.76 0.79 0.68
+```
+
+Each reference lesion receives exactly one outcome: no effective candidate,
+localization insufficient, incorrect class, correct below threshold, or correct
+with threshold met. Candidates have score >=0.05, with at most 100 retained
+per image. Class-agnostic, score-ordered one-to-one localization requires
+IoU >=0.50; an unmatched lesion is a localization failure if its best candidate
+IoU is >=0.25, otherwise it has no effective candidate. Typing and frozen score
+thresholds are checked on the matched prediction only.
+
+The output declares the method and thresholds and provides overall/per-scene
+counts, proportions and per-lesion matching records. The full definition is in
+[`docs/FIVE_LESION_STATES.md`](docs/FIVE_LESION_STATES.md).
+
+The patient interface also uses this same module. The complete synthetic
+example exercises aggregation, all four layers and all five lesion outcomes:
+
+```bash
+python -m interface.infer_patient \
+  examples/patient_input.json patient_output.json \
+  --threshold 0.63 0.76 0.79 0.68
+```
+
+Its output contains `patient_site_summary`, the original `lesion_state` field,
+and `five_lesion_analysis`. Layers 2, 3 and 4 use the same per-image lesion
+matches. For multiple images, supply references inside each `images` entry or
+through `ground_truth_by_image`; empty arrays explicitly declare negative
+images. Class-grouped references without image IDs are supported for a single
+image only.
+
+### Patient-level site summary
 
 Assign the mutually exclusive reporting state to an existing patient output:
 
@@ -197,7 +239,9 @@ python -m interface.summarize_patient_diagnosis \
   --threshold 0.50 0.50 0.50 0.50
 ```
 
-The available states are `no_core_fracture` and the four fracture-site states.
+The patient-level site states are `no_core_fracture` and the four fracture-site
+states. This original reporting function shares the module with lesion error
+analysis, while retaining its patient unit and priority-based meaning.
 The priority order is defined in
 [`algorithm/schemas/five_lesion_states.yaml`](algorithm/schemas/five_lesion_states.yaml).
 
@@ -216,7 +260,8 @@ The analysis modules operate on validated detector outputs and reference boxes:
   separates correct typing, cross-site confusion, background detections, and
   missed lesions.
 - [`five_lesion_states.py`](algorithm/diagnostic_analysis/five_lesion_states.py)
-  produces one mutually exclusive patient-level reporting state.
+  provides patient site assignment, reference-lesion outcome assignment, and
+  the unified summary entry used by both patient interfaces.
 
 The formal data contracts are documented in
 [`docs/INPUT_OUTPUT_SCHEMA.md`](docs/INPUT_OUTPUT_SCHEMA.md), while the
@@ -228,7 +273,9 @@ algorithmic definitions are in
 
 The repository includes data-free unit tests for detector-output validation,
 patient aggregation, all four diagnostic layers, FROC matching, IoU sensitivity,
-localization confusion, and five-state assignment:
+localization confusion, original patient site assignment, and five lesion
+outcomes. Tests cover score/IoU boundaries, competing lesions, stable score
+ties, per-image isolation, and the integrated patient pipeline:
 
 ```bash
 python -m unittest discover -s tests -v

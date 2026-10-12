@@ -1,4 +1,4 @@
-"""Assign the configured five-state diagnostic summary to patient output."""
+"""Summarize patient fracture sites and annotated five-outcome lesion analysis."""
 
 from __future__ import annotations
 
@@ -6,23 +6,20 @@ import argparse
 import json
 from pathlib import Path
 
-from algorithm.diagnostic_analysis.five_lesion_states import assign_lesion_state
-from algorithm.detector.detection_output import CLASS_NAMES
+from algorithm.diagnostic_analysis.five_lesion_states import summarize_diagnosis
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("input", type=Path)
-    parser.add_argument("output", type=Path)
+    parser.add_argument("input", type=Path, help="patient output or JSON containing annotated images")
+    parser.add_argument("output", type=Path, help="JSON diagnosis summary and optional lesion analysis")
     parser.add_argument("--threshold", type=float, nargs=4, required=True)
     args = parser.parse_args()
+    if args.input.resolve() == args.output.resolve():
+        parser.error("input and output must be different files")
     payload = json.loads(args.input.read_text(encoding="utf-8"))
-    scores = payload.get("class_scores") or {
-        name: value for name, value in zip(CLASS_NAMES, payload["layers"]["layer_1_patient_fracture_recognition"]["scores"])
-    }
-    thresholds = dict(zip(CLASS_NAMES, args.threshold))
-    payload["lesion_state"] = assign_lesion_state(scores, thresholds)
-    args.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    result = summarize_diagnosis(payload, args.threshold)
+    args.output.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     return 0
 
 

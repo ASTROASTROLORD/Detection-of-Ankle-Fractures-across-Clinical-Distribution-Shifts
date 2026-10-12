@@ -16,5 +16,7 @@ use.
 ## Outputs
 
 The model produces four fracture-site detection outputs. Patient-level scores,
-fixed-threshold decisions, FROC values, IoU analyses, and five-state summaries
-are derived outputs.
+fixed-threshold decisions, FROC values, IoU analyses, original patient site
+summaries and five reference-lesion outcomes are derived outputs. Lesion
+outcome attribution requires reference annotations and uses per-image matches;
+it cannot be generated as an error label for an unannotated radiograph.

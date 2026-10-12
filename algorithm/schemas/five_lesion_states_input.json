@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Unified five-state diagnosis input",
+  "type": "object",
+  "properties": {
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "image_id",
+          "ground_truth",
+          "detections"
+        ],
+        "properties": {
+          "image_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "scene": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "ground_truth": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "gt_id",
+                "label",
+                "box"
+              ],
+              "properties": {
+                "gt_id": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "label": {
+                  "$ref": "#/$defs/label"
+                },
+                "box": {
+                  "$ref": "#/$defs/box"
+                }
+              }
+            }
+          },
+          "detections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "label",
+                "score",
+                "box"
+              ],
+              "properties": {
+                "label": {
+                  "$ref": "#/$defs/label"
+                },
+                "score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "box": {
+                  "$ref": "#/$defs/box"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "patient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "class_scores": {
+      "$ref": "#/$defs/site_scores"
+    },
+    "layers": {
+      "type": "object",
+      "required": [
+        "layer_1_patient_fracture_recognition"
+      ],
+      "properties": {
+        "layer_1_patient_fracture_recognition": {
+          "type": "object",
+          "required": [
+            "scores"
+          ],
+          "properties": {
+            "scores": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "label": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "box": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "site_scores": {
+      "type": "object",
+      "required": [
+        "lateral_malleolus_fracture",
+        "medial_malleolus_fracture",
+        "posterior_malleolus_fracture",
+        "distal_tibial_fracture"
+      ],
+      "properties": {
+        "lateral_malleolus_fracture": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "medial_malleolus_fracture": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "posterior_malleolus_fracture": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "distal_tibial_fracture": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$comment": "The API additionally validates unique image IDs and per-image reference IDs, finite coordinates and positive box area.",
+  "anyOf": [
+    {
+      "required": [
+        "images"
+      ]
+    },
+    {
+      "required": [
+        "class_scores"
+      ]
+    },
+    {
+      "required": [
+        "layers"
+      ]
+    }
+  ]
+}
