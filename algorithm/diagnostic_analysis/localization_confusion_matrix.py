@@ -4,30 +4,37 @@ from __future__ import annotations
 
 from collections import Counter
 
-import numpy as np
-
 from algorithm.detector.detection_output import CLASS_NAMES, Detection
-from .category_specific_froc import box_iou
+from .five_lesion_states import decompose_image, SCORE_FLOOR, MAX_PREDICTIONS_PER_IMAGE
 
 
 def localization_confusion_matrix(predictions: list[Detection], ground_truth: dict[int, list[dict]], iou_threshold: float = 0.5) -> dict:
+    """Summarize one image using the canonical class-agnostic lesion matches."""
+    predictions = list(predictions)
+    image_ids = {prediction.image_id for prediction in predictions}
+    if len(image_ids) > 1:
+        raise ValueError("confusion matrix inputs must belong to one image")
+    image_id = next(iter(image_ids), "reference-only-image")
+    references = [
+        {"gt_id": f"{label}-{index}", "label": label, "box": item["box"]}
+        for label, items in ground_truth.items()
+        for index, item in enumerate(items)
+    ]
+    lesions = decompose_image(image_id, predictions, references,
+                              localization_iou=iou_threshold)
     rows = Counter()
-    references = [(label, item) for label, items in ground_truth.items() for item in items]
-    used: set[int] = set()
-    for prediction in sorted(predictions, key=lambda item: -item.score):
-        if not references:
+    used = set()
+    for lesion in lesions:
+        if lesion["matched"]:
+            used.add(lesion["prediction_index"])
+            rows[(lesion["gt_class"], lesion["prediction_class"])] += 1
+        else:
+            rows[(lesion["gt_class"], "missed")] += 1
+    ordered = sorted(enumerate(predictions), key=lambda pair: pair[1].label)
+    ordered.sort(key=lambda pair: -pair[1].score)
+    for index, prediction in ordered[:MAX_PREDICTIONS_PER_IMAGE]:
+        if prediction.score >= SCORE_FLOOR and index not in used:
             rows[("background", prediction.class_name)] += 1
-            continue
-        overlaps = [float(box_iou(prediction.box, np.asarray([item[1]["box"]]))[0]) for item in references]
-        index = int(np.argmax(overlaps))
-        if overlaps[index] < iou_threshold or index in used:
-            rows[("background", prediction.class_name)] += 1
-            continue
-        used.add(index)
-        rows[(CLASS_NAMES[references[index][0]], prediction.class_name)] += 1
-    for index, (label, _) in enumerate(references):
-        if index not in used:
-            rows[(CLASS_NAMES[label], "missed")] += 1
     labels = list(CLASS_NAMES) + ["background", "missed"]
     return {
         "iou_threshold": iou_threshold,

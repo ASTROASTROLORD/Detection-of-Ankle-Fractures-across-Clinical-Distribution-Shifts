@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .layer_1_patient_fracture_recognition import recognize_patient
+from .layer_2_lesion_localization import evaluate_lesion_detection
 from .layer_4_fixed_threshold_detection import fixed_threshold_detection
 from algorithm.detector.detection_output import CLASS_NAMES
 from algorithm.diagnostic_analysis.five_lesion_states import summarize_diagnosis
@@ -40,16 +41,9 @@ def run_four_layer_diagnosis(record, thresholds, ground_truth_by_class=None, gro
         } for image_id in record.image_ids]
         analysis = summarize_diagnosis({"images": images}, thresholds)
         counts = analysis["summary"]["all"]["counts"]
-        total = len(analysis["lesions"])
         localized = sum(row["matched"] for row in analysis["lesions"])
         result["five_lesion_analysis"] = analysis
-        result["layer_2_lesion_localization"] = {
-            "iou_threshold": analysis["method"]["localization_iou"],
-            "matching": analysis["method"]["matching"],
-            "reference_lesions": total,
-            "localized_lesions": localized,
-            "localization_sensitivity": localized / total if total else None,
-        }
+        result["layer_2_lesion_localization"] = evaluate_lesion_detection(images)
         matrix = {name: {predicted: 0 for predicted in CLASS_NAMES} for name in CLASS_NAMES}
         for row in analysis["lesions"]:
             if row["matched"]:

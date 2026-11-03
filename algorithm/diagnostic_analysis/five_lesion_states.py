@@ -46,6 +46,8 @@ def decompose_image(
     predictions: Iterable[Detection],
     ground_truth: Iterable[dict],
     thresholds: Sequence[float] = FROZEN_CLASS_THRESHOLDS,
+    *,
+    localization_iou: float = LOCALIZATION_IOU,
 ) -> list[dict]:
     """Assign one outcome to each ``{gt_id, label, box}`` reference lesion.
 
@@ -55,6 +57,8 @@ def decompose_image(
     """
     if not isinstance(image_id, str) or not image_id.strip():
         raise ValueError("image_id must be a non-empty string")
+    if not np.isfinite(localization_iou) or not 0 <= localization_iou <= 1:
+        raise ValueError("localization IoU must be between 0 and 1")
     thresholds = _thresholds(thresholds)
     predictions = list(predictions)
     if any(prediction.image_id != image_id for prediction in predictions):
@@ -96,7 +100,7 @@ def decompose_image(
         eligible = np.flatnonzero(available)
         if len(eligible):
             chosen = int(eligible[np.argmax(overlaps[eligible])])
-            if overlaps[chosen] >= LOCALIZATION_IOU:
+            if overlaps[chosen] >= localization_iou:
                 available[chosen] = False
                 matches[chosen] = (prediction_index, prediction, rank, float(overlaps[chosen]))
     rows = []

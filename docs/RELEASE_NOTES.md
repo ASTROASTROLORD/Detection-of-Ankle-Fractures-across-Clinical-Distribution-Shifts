@@ -1,3 +1,33 @@
+# Unreleased — manuscript alignment
+
+The project display title and citation title now match the manuscript
+“Multicenter Evaluation of Patient-Level Recognition and Lesion-Level Detection
+of Ankle Fractures across Clinical Scenarios.” Citation metadata points to the
+public repository.
+
+Level 2 now uses per-image same-class matching at IoU >=0.50 and provides pooled
+FROC operating points. Layers 3 and 4 use class-agnostic matching for conditional
+typing and five-outcome analysis. Existing Level 2 output keys are retained;
+their localization counts and sensitivity now require correct site class.
+The new detection fields express this definition explicitly. Cohort evaluation
+includes negative images in the FP/radiograph denominator.
+
+The default validation threshold grid is 0.05–0.95 inclusive at 0.01 increments.
+README patient examples use the manuscript's frozen class thresholds and
+image-grouped references. Regression tests cover these method definitions.
+
+The standalone localization confusion matrix now shares the canonical matcher
+with the patient pipeline. It searches available references after a competing
+prediction occupies the highest-IoU reference, applies the score floor and
+top-100 limit, and rejects mixed-image inputs. Custom IoU thresholds remain
+supported.
+
+The geometry helper now defaults to the manuscript's 800/1333 resize bounds,
+supports upscaling, and accounts for rounded per-axis scales when mapping boxes
+back to the source. Padding is right/bottom to multiples of 32. The public
+MMDetection configuration includes the complete inference transform pipeline,
+explicit normalization and class-wise NMS settings.
+
 # Version 0.2.0
 
 The original five-state module, summary interface, documentation and tests now

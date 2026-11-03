@@ -6,4 +6,6 @@ from algorithm.diagnostic_analysis.localization_confusion_matrix import localiza
 
 
 def type_after_localization(record, ground_truth, iou_threshold: float = 0.5) -> dict:
+    if len(record.image_ids) != 1:
+        raise ValueError("multiple images require the patient pipeline with per-image references")
     return localization_confusion_matrix(record.detections, ground_truth, iou_threshold)

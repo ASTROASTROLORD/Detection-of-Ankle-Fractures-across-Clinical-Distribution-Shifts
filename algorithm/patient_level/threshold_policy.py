@@ -27,7 +27,7 @@ def select_thresholds(targets: np.ndarray, scores: np.ndarray, grid=None) -> lis
     scores = np.asarray(scores, dtype=float)
     if targets.shape != scores.shape or targets.ndim != 2:
         raise ValueError("targets and scores must be equally shaped matrices")
-    grid = np.asarray(grid if grid is not None else np.round(np.arange(0.05, 1.01, 0.05), 2))
+    grid = np.asarray(grid if grid is not None else np.arange(5, 96) / 100.0)
     selected = []
     for column in range(targets.shape[1]):
         candidates = [(binary_stats(targets[:, column], scores[:, column] >= threshold)["f1"],

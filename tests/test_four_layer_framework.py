@@ -25,6 +25,9 @@ class FourLayerTests(unittest.TestCase):
                                        ground_truth_by_image={"i": [{"gt_id": 1, "label": 0, "box": [0, 0, 10, 10]}]})
         self.assertEqual(old, new)
         self.assertEqual(old["five_lesion_analysis"]["summary"]["all"]["counts"]["wrong_class"], 1)
+        self.assertEqual(old["layer_2_lesion_localization"]["detected_lesions"], 0)
+        self.assertEqual(old["layer_2_lesion_localization"]["false_positive_boxes"], 1)
+        self.assertEqual(old["layer_3_post_localization_typing"]["localized_lesions"], 1)
 
     def test_image_annotations_share_the_five_state_matching_result(self):
         record = aggregate_patient("p", ["a", "b"], {"a": [0]},

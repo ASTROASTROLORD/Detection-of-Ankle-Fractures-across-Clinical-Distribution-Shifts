@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ankle-fracture-algorithm"
 version = "0.2.0"
-description = "Faster R-CNN ankle-fracture detection with patient-level diagnostic analysis"
+description = "Multicenter Evaluation of Patient-Level Recognition and Lesion-Level Detection of Ankle Fractures across Clinical Scenarios"
 requires-python = ">=3.10"
 dependencies = ["numpy>=1.24"]
 

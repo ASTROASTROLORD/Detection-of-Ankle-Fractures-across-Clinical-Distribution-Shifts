@@ -34,7 +34,8 @@ image-grouped reference labels determine those targets.
 Output includes `class_scores`, `class_predictions`, `layers`, the four layer
 fields, `patient_site_summary` and `lesion_state`. With image-grouped reference
 annotations it additionally includes `five_lesion_analysis`, using the same
-matched rows as layers 2–4. Only annotated inputs enable lesion analysis.
+matched rows as layers 3–4. Level 2 independently reports same-class detection
+and FROC over the supplied patient images. Only annotated inputs enable lesion analysis.
 
 Contracts: `patient_input.json` and `patient_output.json`. Complete synthetic
 examples are under `examples/`. Schemas are installed as package resources.

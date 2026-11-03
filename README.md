@@ -1,12 +1,9 @@
-# Deep Learning-based Detection of Ankle Fractures across Clinical Distribution Shifts
-
-## A Multicenter Hierarchical Performance Evaluation
+# Multicenter Evaluation of Patient-Level Recognition and Lesion-Level Detection of Ankle Fractures across Clinical Scenarios
 
 This repository contains the article-facing implementation of the final ankle
 fracture detection algorithm described in:
 
-> **Deep Learning-based Detection of Ankle Fractures across Clinical
-> Distribution Shifts: A Multicenter Hierarchical Performance Evaluation**
+> **Multicenter Evaluation of Patient-Level Recognition and Lesion-Level Detection of Ankle Fractures across Clinical Scenarios**
 
 The public code exposes one final detector, a Faster R-CNN with a ResNet-50-FPN
 backbone, together with the patient-level diagnostic framework used to
@@ -35,8 +32,8 @@ The detector output is interpreted through a four-layer diagnostic framework:
 
 1. **Patient-level fracture recognition** aggregates the maximum class-specific
    detection score across all radiographs belonging to a patient.
-2. **Lesion localization** evaluates whether predicted boxes overlap reference
-   lesions at a declared IoU threshold.
+2. **Lesion detection** requires same-class one-to-one matching at IoU >=0.50
+   and reports FROC sensitivity at declared false-positive budgets.
 3. **Post-localization fracture-site typing** separates correct localization
    from fracture-site confusion.
 4. **Fixed-threshold detection performance** reports the final operating point
@@ -122,6 +119,21 @@ MMDetection versions listed above separately.
 
 ### Image-level detector output
 
+The MMDetection configuration is
+`algorithm/detector/faster_rcnn_r50_fpn.py`. Its test pipeline loads an image,
+resizes it with aspect ratio preserved to a short side of 800 pixels subject
+to a 1,333-pixel long-side limit, and packs the detector input. The model
+preprocessor converts BGR to RGB, applies ImageNet normalization and pads the
+right and bottom to multiples of 32. Detection postprocessing uses a 0.05
+score threshold, class-wise NMS at IoU 0.50 and a 100-box per-image limit.
+
+`make_resize_plan()` mirrors the resize geometry, including upscaling small
+images. Coordinate inversion uses the actual rounded width and height ratios.
+Its padded dimensions describe a single-image input; batched preprocessing
+can pad further to the largest image in the batch. MMDetection inference
+outputs already use original-image coordinates and can be passed directly to
+the JSON interfaces below.
+
 The public interface accepts an MMDetection-style JSON record. `label` is the
 zero-based detector class index and `box` uses `[x1, y1, x2, y2]` image
 coordinates.
@@ -151,8 +163,8 @@ The output contains the class name, confidence, and validated image-space box.
 
 Patient input groups all available radiographs for one patient and supplies the
 detector detections. The optional `target_labels_by_image` field provides
-patient-level reference labels. The optional `ground_truth_by_class` field
-provides reference boxes when localization and post-localization typing
+patient-level reference labels. The optional `ground_truth_by_image` field
+provides per-image reference boxes when localization and post-localization typing
 summaries are required.
 
 ```json
@@ -163,8 +175,9 @@ summaries are required.
     "radiograph-001": [0],
     "radiograph-002": []
   },
-  "ground_truth_by_class": {
-    "0": [{"box": [118.0, 79.0, 312.0, 272.0}]}
+  "ground_truth_by_image": {
+    "radiograph-001": [{"gt_id": 1, "label": 0, "box": [118.0, 79.0, 312.0, 272.0]}],
+    "radiograph-002": []
   },
   "detections": [
     {
@@ -182,12 +195,40 @@ Run the patient-level interface with four fixed class thresholds:
 ```bash
 python -m interface.infer_patient \
   patient_input.json patient_output.json \
-  --threshold 0.50 0.50 0.50 0.50
+  --threshold 0.63 0.76 0.79 0.68
 ```
 
 The output includes patient-level class scores, fixed-threshold decisions, and
 the four-layer result structure. Thresholds are part of the declared operating
 point and should not be changed silently when comparing outputs.
+
+### Same-class lesion detection and FROC
+
+Level 2 requires matching fracture-site classes and IoU >=0.50. For a cohort,
+pass all its annotated images, including negative images, to the evaluator.
+Each detection must already have undergone class-wise NMS at IoU 0.50.
+The evaluator applies the 0.05 score floor and the cross-class limit of 100
+predictions per image before matching.
+
+```python
+import json
+from algorithm.patient_level.layer_2_lesion_localization import evaluate_lesion_detection
+
+with open("examples/five_lesion_states_input.json", encoding="utf-8") as source:
+    payload = json.load(source)
+result = evaluate_lesion_detection(payload["images"])
+print(result["sensitivity_at_fp_per_radiograph"])
+```
+
+Operating points use the highest observed sensitivity within each FP budget,
+without interpolation. Negative images contribute to the FP/radiograph
+denominator. Cohort FROC is computed from pooled events across cohort images.
+The patient interface reports FROC over that patient's supplied images.
+
+Validation threshold selection searches 0.05 through 0.95 inclusive in steps
+of 0.01, maximizing patient-level F1 for each class. Ties favor the threshold
+closest to 0.50, then the higher threshold. Testing uses the frozen thresholds
+0.63, 0.76, 0.79 and 0.68.
 
 ### Unified five-state analysis
 
@@ -223,8 +264,9 @@ python -m interface.infer_patient \
 ```
 
 Its output contains `patient_site_summary`, the original `lesion_state` field,
-and `five_lesion_analysis`. Layers 2, 3 and 4 use the same per-image lesion
-matches. For multiple images, supply references inside each `images` entry or
+and `five_lesion_analysis`. Layers 3 and 4 share class-agnostic per-image lesion
+matches. Level 2 independently uses same-class matching. For multiple images,
+supply references inside each `images` entry or
 through `ground_truth_by_image`; empty arrays explicitly declare negative
 images. Class-grouped references without image IDs are supported for a single
 image only.
@@ -236,7 +278,7 @@ Assign the mutually exclusive reporting state to an existing patient output:
 ```bash
 python -m interface.summarize_patient_diagnosis \
   patient_output.json patient_diagnosis.json \
-  --threshold 0.50 0.50 0.50 0.50
+  --threshold 0.63 0.76 0.79 0.68
 ```
 
 The patient-level site states are `no_core_fracture` and the four fracture-site
@@ -301,8 +343,7 @@ The model card and limitations are available in
 If you use this code, please cite the associated article:
 
 ```text
-Deep Learning-based Detection of Ankle Fractures across Clinical Distribution
-Shifts: A Multicenter Hierarchical Performance Evaluation.
+Multicenter Evaluation of Patient-Level Recognition and Lesion-Level Detection of Ankle Fractures across Clinical Scenarios.
 ```
 
 Machine-readable citation metadata is provided in [`CITATION.cff`](CITATION.cff).

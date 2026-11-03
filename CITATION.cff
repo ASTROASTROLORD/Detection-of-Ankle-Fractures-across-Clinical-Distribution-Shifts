@@ -1,9 +1,9 @@
 cff-version: 1.2.0
-title: "Deep Learning-based Detection of Ankle Fractures across Clinical Distribution Shifts: A Multicenter Hierarchical Performance Evaluation"
+title: "Multicenter Evaluation of Patient-Level Recognition and Lesion-Level Detection of Ankle Fractures across Clinical Scenarios"
 message: Please cite the associated article when using this software.
 type: software
 authors:
   - name: Ankle Fracture Algorithm Contributors
 year: 2026
 license: MIT
-repository-code: https://github.com/example/ankle-fracture-algorithm
+repository-code: https://github.com/ASTROASTROLORD/Detection-of-Ankle-Fractures-across-Clinical-Distribution-Shifts

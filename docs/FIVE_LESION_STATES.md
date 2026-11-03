@@ -110,7 +110,8 @@ returns the site summary, without using patient scores to classify lesions.
 
 `run_four_layer_diagnosis` invokes this same module. With
 `ground_truth_by_image`, its `five_lesion_analysis` contains the canonical
-lesion matches: layer 2 counts matched lesions, layer 3 builds its conditional
+lesion matches. Layer 2 separately evaluates same-class detection and FROC.
+Layer 3 builds its conditional
 site-confusion matrix from those matched rows, and layer 4 reports the same
 five-outcome counts alongside thresholded detections. `class_predictions` and
 `layers` are included as declared by the patient-output schema.
